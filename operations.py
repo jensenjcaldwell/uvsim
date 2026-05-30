@@ -1,3 +1,7 @@
+#READ
+
+#WRITE
+
 #LOAD
 def load(operand, registers):
   

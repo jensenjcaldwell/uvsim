@@ -1,3 +1,5 @@
+import operations
+
 registers = {i: 0 for i in range(100)}
 accumulator = 0
 
@@ -24,6 +26,7 @@ def read_program(filename, registers):
             registers[address] = instruction
 
 def execute_program(registers):
+    global accumulator
     pointer = 0
     while True:
         # check for invalid word before decoding an instruction.
@@ -41,11 +44,23 @@ def execute_program(registers):
             case 11:  # WRITE:
                 pass    
             case 20:  # LOAD:
-                pass
+                
+                accumulator = operations.load(instruction.operand, registers)
+
+                print(f"\nLOAD successful! The accumulator is now: {accumulator}")
+                
             case 21:  # STORE:
-                pass
+                
+                operations.store(instruction.operand, accumulator, registers)
+
+                print(f"\nSTORE successful! Saved {accumulator} to register {instruction.operand}\n")
+                
             case 30:  # ADD:
-                pass
+                
+                operations.add(instruction.operand, accumulator, registers)
+
+                print(f"\nADD successful! New accumulator value is: {accumulator}")
+
             case 31:  # SUBTRACT:
                 pass
             case 32:  # DIVIDE:

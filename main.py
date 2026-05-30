@@ -62,11 +62,23 @@ def execute_program(registers):
                 print(f"\nADD successful! New accumulator value is: {accumulator}")
 
             case 31:  # SUBTRACT:
-                pass
+                
+                operations.subtract(instruction.operand, accumulator, registers)
+
+                print(f"\nSUBTRACT successful! Subtracted {instruction.operand} located in register from the accumulator")
+
             case 32:  # DIVIDE:
-                pass
+                
+                operations.divide(instruction.operand, accumulator, registers)
+
+                print(f"\nDIVIDE successful! Divided the accumulator by {instruction.operand} located in register")
+
             case 33:  # MULTIPLY:
-                pass
+                
+                operations.multiply(instruction.operand, accumulator, registers)
+
+                print(f"\nMULTIPLY successful! Multiplied the accumulator by {instruction.operand} located in register")            
+            
             case 40:  # BRANCH:
                 pass
             case 41:  # BRANCHNEG:

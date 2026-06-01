@@ -1,6 +1,21 @@
 #READ
+def read(operand, registers):
+    #loop until user gives out a number
+    while True:
+        try:
+            read_input = int(input("insert a number: "))
+            break  
+        except ValueError:
+            print("not a number, try again.")
+    #stores the user input into the memory number of the operand
+    registers[operand] = read_input
 
 #WRITE
+def write(operand, registers):
+    # copies a word from the content inside a specific register
+    printing_word = registers[operand]
+    # writes it to the screen
+    print(printing_word)
 
 #LOAD
 def load(operand, registers):

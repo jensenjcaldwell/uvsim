@@ -40,9 +40,9 @@ def execute_program(registers):
 
         match instruction.code:
             case 10:  # READ:
-                pass
+                operations.read(instruction.operand, registers)
             case 11:  # WRITE:
-                pass    
+                operations.write(instruction.operand,registers)     
             case 20:  # LOAD:
                 
                 accumulator = operations.load(instruction.operand, registers)

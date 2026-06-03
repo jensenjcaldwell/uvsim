@@ -1,4 +1,5 @@
 import operations
+import sys
 
 registers = {i: 0 for i in range(100)}
 accumulator = 0
@@ -57,25 +58,25 @@ def execute_program(registers):
                 
             case 30:  # ADD:
                 
-                operations.add(instruction.operand, accumulator, registers)
+                accumulator = operations.add(instruction.operand, accumulator, registers)
 
                 print(f"\nADD successful! New accumulator value is: {accumulator}")
 
             case 31:  # SUBTRACT:
                 
-                operations.subtract(instruction.operand, accumulator, registers)
+                accumulator = operations.subtract(instruction.operand, accumulator, registers)
 
                 print(f"\nSUBTRACT successful! Subtracted {instruction.operand} located in register from the accumulator")
 
             case 32:  # DIVIDE:
                 
-                operations.divide(instruction.operand, accumulator, registers)
+                accumulator = operations.divide(instruction.operand, accumulator, registers)
 
                 print(f"\nDIVIDE successful! Divided the accumulator by {instruction.operand} located in register")
 
             case 33:  # MULTIPLY:
                 
-                operations.multiply(instruction.operand, accumulator, registers)
+                accumulator = operations.multiply(instruction.operand, accumulator, registers)
 
                 print(f"\nMULTIPLY successful! Multiplied the accumulator by {instruction.operand} located in register")            
             
@@ -92,13 +93,17 @@ def execute_program(registers):
         pointer += 1
 
 def main():
-    read_program('test1.txt', registers)
-    for i in range(100):
-        if isinstance(registers[i], Instruction):
-            print(f"Register {i}: {registers[i].sign}{registers[i].code:02d}{registers[i].operand:02d}")
-        else:
-            print(f"Register {i}: {registers[i]}")
+
+    if sys.argv[1:]:
+        filename = sys.argv[1]    
+    else:
+        filename = input("Enter the filename: ")
+
+
+    read_program(filename, registers)
+
     execute_program(registers)
+
 
 if __name__ == "__main__":
     main()

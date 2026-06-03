@@ -12,6 +12,11 @@ class Instruction:
 
 def split_instruction(string):
     # Parse a signed 4-digit word like +4300 into opcode + operand parts.
+    if not string:
+        raise ValueError("Empty instruction line")
+    if len(string) != 5 or string[0] not in "+-" or not string[1:].isdigit():
+        raise ValueError(f"Invalid instruction format: {string}")
+
     output = Instruction(None, None, None)
     output.sign = string[0]
     output.code = int(string[1:3])
@@ -23,7 +28,10 @@ def read_program(filename, registers):
     with open(filename, 'r') as f:
         # Program words are loaded by memory address (line index), not operand value.
         for address, line in enumerate(f):
-            instruction = split_instruction(line.strip())
+            stripped = line.strip()
+            if not stripped:
+                continue
+            instruction = split_instruction(stripped)
             registers[address] = instruction
 
 def execute_program(registers):
@@ -98,6 +106,8 @@ def main():
         filename = sys.argv[1]    
     else:
         filename = input("Enter the filename: ")
+
+    
 
 
     read_program(filename, registers)

@@ -45,7 +45,55 @@ class TestDivision(unittest.TestCase):
         registers[100] = 5
         result = operations.divide(0, 100, registers)
         self.assertEqual(result, 2)
+
+class TestOperations(unittest.TestCase):
+    def setUp(self):
+      self.registers = {i: 0 for i in range(100)}
+    
+    #(LOAD)
+    def test_load_success(self):
+      self.registers[5] = 42
+
+      result = operations.load(5, self.registers)
+      self.assertEqual(result, 42)
+    
+    def test_instuctions(self):
+      instruction = main.Instruction('+', 43, 0)
+
+      self.registers[5] = instruction
+      result = operations.load(5, self.registers)
+      self.assertEqual(result, 4300)
         
+    #(ADD)
+    def test_add_success(self):
+      self.registers[7] = 15
+
+      starting_acc = 35
+      result = operations.add(7, starting_acc, self.registers)
+      self.assertEqual(result, 50)
+
+    def test_string_error(self):
+      self.registers[7] = "school"
+
+      starting_acc = 10
+      with self.assertRaises(ValueError):
+        operations.add(7, starting_acc, self.registers)
+
+    #(MULTIPLY)
+    def test_multiply_success(self):
+      self.registers[10] = 6
+      starting_accumulator = 5
+        
+      result = operations.multiply(10, starting_accumulator, self.registers)
+      self.assertEqual(result, 30)
+
+    def test_multiply_negative(self):
+      self.registers[10] = 5
+      starting_accumulator = -4
+        
+      result = operations.multiply(10, starting_accumulator, self.registers)
+      self.assertEqual(result, -20)
+
 
 
 if __name__ == "__main__":

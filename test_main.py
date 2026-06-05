@@ -5,6 +5,9 @@ import unittest
 import main
 import operations
 
+import io
+from unittest.mock import patch
+
 
 class TestMain(unittest.TestCase):
     def test_split_instruction_parses_signed_word(self):
@@ -49,6 +52,24 @@ class TestDivision(unittest.TestCase):
 class TestOperations(unittest.TestCase):
     def setUp(self):
       self.registers = {i: 0 for i in range(100)}
+
+
+    def test_read_success(self):
+        self.registers[7] = 0
+
+        operations.read(7, self.registers)
+
+        self.assertEqual(self.registers[7], 55)
+
+    def test_write_success(self):
+        self.registers[7] = 55
+
+        with patch('sys.stdout', new=io.StringIO()) as output:
+            operations.write(7, self.registers)
+
+            captured_output = output.getvalue()
+
+        self.assertEqual(captured_output, "55\n")
     
     #(LOAD)
     def test_load_success(self):

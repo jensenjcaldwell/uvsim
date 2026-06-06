@@ -37,7 +37,8 @@ def read_program(filename, registers):
 def execute_program(registers):
     global accumulator
     pointer = 0
-    while True:
+    running = True
+    while running:
         # check for invalid word before decoding an instruction.
         if pointer < 0 or pointer >= len(registers):
             print("Error: Pointer out of bounds.")
@@ -46,6 +47,7 @@ def execute_program(registers):
             print("Error: No instruction at pointer.")
             break
         instruction = registers[pointer]
+        advance_pointer = True
 
         match instruction.code:
             case 10:  # READ:
@@ -89,16 +91,28 @@ def execute_program(registers):
                 print(f"\nMULTIPLY successful! Multiplied the accumulator by {instruction.operand} located in register")            
             
             case 40:  # BRANCH:
-                pass
+                pointer = operations.branch(instruction.operand)
+                advance_pointer = False
             case 41:  # BRANCHNEG:
-                pass
+                branch_target = operations.branch_neg(instruction.operand, accumulator)
+                if branch_target is not None:
+                    pointer = branch_target
+                    advance_pointer = False
             case 42:  # BRANCHZERO:
-                pass
+                branch_target = operations.branch_zero(instruction.operand, accumulator)
+                if branch_target is not None:
+                    pointer = branch_target
+                    advance_pointer = False
             case 43:  # HALT:
+                running = operations.halt()
                 print("Program halted.")
-                break
+                print(f"Final state of accumulator  : {accumulator}")
+                advance_pointer = False
+            case _:
+                raise ValueError(f"Unknown opcode: {instruction.code}")
         # Default behavior: move to next sequential instruction.
-        pointer += 1
+        if advance_pointer:
+            pointer += 1
 
 def main():
 

@@ -54,22 +54,43 @@ class TestOperations(unittest.TestCase):
       self.registers = {i: 0 for i in range(100)}
 
 
-    def test_read_success(self):
-        self.registers[7] = 0
+    #(READ)
+def test_read_success(self):
+    self.registers[7] = 0
 
+    #adds input automatically
+    with patch('builtins.input', return_value='55'):
         operations.read(7, self.registers)
 
-        self.assertEqual(self.registers[7], 55)
+    self.assertEqual(self.registers[7], 55)
 
-    def test_write_success(self):
-        self.registers[7] = 55
+def test_read_success_2(self):
+    self.registers[7] = 0
 
-        with patch('sys.stdout', new=io.StringIO()) as output:
-            operations.write(7, self.registers)
+    #adds input automatically
+    with patch('builtins.input', side_effect=['abc','55']):
+        operations.read(7, self.registers)
 
-            captured_output = output.getvalue()
+    self.assertEqual(self.registers[7], 55)
 
-        self.assertEqual(captured_output, "55\n")
+
+#(WRITE)
+def test_write_success(self):
+    self.registers[7] = 55
+
+    with patch('sys.stdout', new=io.StringIO()) as output:
+        operations.write(7, self.registers)
+        
+    self.assertEqual(output.getvalue(), "55\n")
+
+def test_write_success_2(self):
+    self.registers[7] = 55
+    self.registers[8] = 0
+
+    with patch('sys.stdout', new=io.StringIO()) as output:
+        operations.write(8, self.registers)
+
+    self.assertEqual(output.getvalue(), "0\n")
     
     #(LOAD)
     def test_load_success(self):

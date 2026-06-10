@@ -18,13 +18,15 @@ def _get_memory_val(memory_content):
 # READ
 def read(operand, registers):
     _validate_address(operand)
+
     while True:
-        try:
-            read_input = int(input("insert a number: "))
+        raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
+
+        if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
+            registers[operand] = int(raw_input)
             break
-        except ValueError:
-            print("not a number, try again.")
-    registers[operand] = read_input
+        else:
+            print("[!] Invalid input. You must include a sign (+ or -) and exactly 4 digits. Try again.")
 
 
 # WRITE

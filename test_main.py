@@ -49,8 +49,29 @@ class TestMain(unittest.TestCase):
         registers = {i: 0 for i in range(100)}
         registers[0] = main.Instruction("+", 99, 0)
 
-        with self.assertRaises(ValueError):
+        with patch("sys.stdout", new=io.StringIO()) as output:
             main.execute_program(registers)
+        console_text = output.getvalue()
+        
+        # Verify the try/except block caught it and printed the clean error
+        self.assertIn("RUNTIME ERROR", console_text)
+        self.assertIn("Unknown opcode", console_text)
+        
+
+    def test_read_program_missing_file_raises_error(self):
+        # Checks if trying to read a non-existent file properly triggers a FileNotFoundError
+        registers = {i: 0 for i in range(100)}
+        with self.assertRaises(FileNotFoundError):
+            main.read_program("this_file_does_not_exist.txt", registers)
+
+    def test_split_instruction_malformed_format_raises_error(self):
+        # Checks if passing bad text (like letters or wrong lengths) triggers a ValueError
+        with self.assertRaises(ValueError):
+            main.split_instruction("INVALID")
+        with self.assertRaises(ValueError):
+            main.split_instruction("+ABCD")
+        with self.assertRaises(ValueError):
+            main.split_instruction("123456") # Too long            
 
 
 class TestOperations(unittest.TestCase):
@@ -58,12 +79,12 @@ class TestOperations(unittest.TestCase):
         self.registers = {i: 0 for i in range(100)}
 
     def test_read_success(self):
-        with patch("builtins.input", return_value="55"):
+        with patch("builtins.input", return_value="+0055"):
             operations.read(7, self.registers)
         self.assertEqual(self.registers[7], 55)
 
     def test_read_retries_after_invalid_input(self):
-        with patch("builtins.input", side_effect=["abc", "55"]):
+        with patch("builtins.input", side_effect=["abc", "+0055"]):
             operations.read(7, self.registers)
         self.assertEqual(self.registers[7], 55)
 
@@ -149,6 +170,42 @@ class TestOperations(unittest.TestCase):
     def test_invalid_memory_access_raises(self):
         with self.assertRaises(ValueError):
             operations.read(100, self.registers)
+
+
+    def test_add_overflow_truncation(self):
+        # Setup: 8000 + 5000 = 13000. It should chop off the 1 and leave 3000.
+        self.registers[7] = 8000
+        starting_acc = 5000
+        result = operations.add(7, starting_acc, self.registers)
+        self.assertEqual(result, 3000)
+
+    def test_multiply_overflow_truncation(self):
+        # Setup: 500 * 500 = 250,000. It should truncate the higher digits and leave 0000.
+        self.registers[8] = 500
+        starting_acc = 500
+        result = operations.multiply(8, starting_acc, self.registers)
+        self.assertEqual(result, 0)
+
+
+    def test_subtract_negative_math_pemdas(self):
+        #reconstructed memory values apply the negative sign correctly
+        instruction = main.Instruction('-', 10, 50) # Represents the word -1050
+        self.registers[7] = instruction
+        starting_acc = 0
+        
+        # Math: 0 - (-1050) = 1050
+        result = operations.subtract(7, starting_acc, self.registers)
+        self.assertEqual(result, 1050)
+
+    def test_branch_zero_regression(self):
+        # Verify it successfully jumps ONLY when the accumulator is exactly zero
+        self.assertEqual(operations.branch_zero(15, 0), 15) # Should return 15 (Jump!)
+        self.assertIsNone(operations.branch_zero(15, 99))   # Should return None (Don't jump)
+
+    def test_branch_neg_regression(self):
+        # Verify it successfully jumps ONLY when the accumulator is negative
+        self.assertEqual(operations.branch_neg(22, -50), 22) # Should return 22 (Jump!)
+        self.assertIsNone(operations.branch_neg(22, 50))     # Should return None (Don't jump)
 
 
 if __name__ == "__main__":

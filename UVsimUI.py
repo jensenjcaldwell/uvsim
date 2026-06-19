@@ -1,4 +1,4 @@
-import main
+import classes
 import tkinter as tk
 from tkinter import ttk, messagebox
 import sys
@@ -12,12 +12,12 @@ root.geometry("800x700")
 last_output = ""
 original_stdout = sys.stdout
 
-sim = main.simulator()
+sim = classes.simulator()
 register_value_labels = {}
 
 
 def _format_register_value(value):
-    if isinstance(value, main.Instruction):
+    if isinstance(value, classes.Instruction):
         return f"{value.sign}{value.code:02d}{value.operand:02d}"
     return str(value)
 
@@ -63,7 +63,7 @@ def run_program():
     try:
         # Reset simulator state on each run so stale values do not leak between runs.
         global sim
-        sim = main.simulator()
+        sim = classes.simulator()
 
         sim.read_program(file_entry.get())
 

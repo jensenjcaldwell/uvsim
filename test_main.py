@@ -4,23 +4,25 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import main
+import classes
 import operations
 
 
 class TestMain(unittest.TestCase):
     def test_split_instruction_parses_signed_word(self):
-        instruction = main.split_instruction("+4300")
+        sim = classes.simulator()
+        instruction = sim.split_instruction("+4300")
         self.assertEqual(instruction.sign, "+")
         self.assertEqual(instruction.code, 43)
         self.assertEqual(instruction.operand, 0)
 
     def test_split_instruction_rejects_empty_line(self):
+        sim = classes.simulator()
         with self.assertRaises(ValueError):
-            main.split_instruction("")
+            sim.split_instruction("")
 
     def test_read_program_skips_blank_lines(self):
-        registers = {i: 0 for i in range(100)}
+        sim = classes.simulator()
         program = "+1007\n\n+4300\n"
 
         with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
@@ -28,30 +30,32 @@ class TestMain(unittest.TestCase):
             tmp_path = tmp.name
 
         try:
-            main.read_program(tmp_path, registers)
+            sim.read_program(tmp_path)
         finally:
             os.unlink(tmp_path)
 
-        self.assertIsInstance(registers[0], main.Instruction)
-        self.assertEqual(registers[0].code, 10)
-        self.assertIsInstance(registers[2], main.Instruction)
-        self.assertEqual(registers[2].code, 43)
+        self.assertIsInstance(sim.registers[0], classes.Instruction)
+        self.assertEqual(sim.registers[0].code, 10)
+        self.assertIsInstance(sim.registers[2], classes.Instruction)
+        self.assertEqual(sim.registers[2].code, 43)
 
     def test_execute_program_halts_on_halt_instruction(self):
-        registers = {i: 0 for i in range(100)}
-        registers[0] = main.Instruction("+", 43, 0)
-        registers[1] = main.Instruction("+", 99, 0)
+        sim = classes.simulator()
+        sim.registers[0] = classes.Instruction("+", 43, 0)
+        sim.registers[1] = classes.Instruction("+", 99, 0)
 
         # If HALT works, opcode 99 is never executed.
-        main.execute_program(registers)
+        status = sim.advance()
+        self.assertEqual(status, "HALTED")
 
     def test_execute_program_raises_on_invalid_instruction(self):
-        registers = {i: 0 for i in range(100)}
-        registers[0] = main.Instruction("+", 99, 0)
+        sim = classes.simulator()
+        sim.registers[0] = classes.Instruction("+", 99, 0)
 
         with patch("sys.stdout", new=io.StringIO()) as output:
-            main.execute_program(registers)
+            status = sim.advance()
         console_text = output.getvalue()
+        self.assertEqual(status, "RUNTIME_ERROR")
         
         # Verify the try/except block caught it and printed the clean error
         self.assertIn("RUNTIME ERROR", console_text)
@@ -60,18 +64,19 @@ class TestMain(unittest.TestCase):
 
     def test_read_program_missing_file_raises_error(self):
         # Checks if trying to read a non-existent file properly triggers a FileNotFoundError
-        registers = {i: 0 for i in range(100)}
+        sim = classes.simulator()
         with self.assertRaises(FileNotFoundError):
-            main.read_program("this_file_does_not_exist.txt", registers)
+            sim.read_program("this_file_does_not_exist.txt")
 
     def test_split_instruction_malformed_format_raises_error(self):
         # Checks if passing bad text (like letters or wrong lengths) triggers a ValueError
+        sim = classes.simulator()
         with self.assertRaises(ValueError):
-            main.split_instruction("INVALID")
+            sim.split_instruction("INVALID")
         with self.assertRaises(ValueError):
-            main.split_instruction("+ABCD")
+            sim.split_instruction("+ABCD")
         with self.assertRaises(ValueError):
-            main.split_instruction("123456") # Too long            
+            sim.split_instruction("123456") # Too long            
 
 
 class TestOperations(unittest.TestCase):
@@ -106,7 +111,7 @@ class TestOperations(unittest.TestCase):
         self.assertEqual(result, 42)
 
     def test_load_instruction_word(self):
-        self.registers[5] = main.Instruction("+", 43, 0)
+        self.registers[5] = classes.Instruction("+", 43, 0)
         result = operations.load(5, self.registers)
         self.assertEqual(result, 4300)
 
@@ -189,7 +194,7 @@ class TestOperations(unittest.TestCase):
 
     def test_subtract_negative_math_pemdas(self):
         #reconstructed memory values apply the negative sign correctly
-        instruction = main.Instruction('-', 10, 50) # Represents the word -1050
+        instruction = classes.Instruction('-', 10, 50) # Represents the word -1050
         self.registers[7] = instruction
         starting_acc = 0
         

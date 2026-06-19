@@ -16,11 +16,14 @@ def _get_memory_val(memory_content):
 
 
 # READ
-def read(operand, registers):
+def read(operand, registers, inputval=None):
     _validate_address(operand)
-
     while True:
-        raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
+        if inputval is not None:
+            raw_input = inputval.strip()
+            inputval = None  # Clear after first use to avoid reuse in subsequent READs
+        else:
+            raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
 
         if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
             registers[operand] = int(raw_input)

@@ -150,6 +150,20 @@ class UVsimUI:
         self.accumulator_value = ttk.Label(accumulator_frame, text=str(self.sim.accumulator))
         self.accumulator_value.pack(side="top", padx=5, pady=5)
 
+        editor_frame = ttk.Frame(self.root)
+        editor_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
+
+        ttk.Label(editor_frame, text="BasicML Code Editor: ").pack(anchor="w")
+
+        self.code_editor = tk.Text(editor_frame, width=60, height=20,font=("Consolas",11))
+        self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
+
+        scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
+        scrollbar.pack(side="left", fill="y")
+        self.code_editor.config(yscrollcommand=scrollbar.set)
+        
+
+        '''
         register_frame = ttk.Frame(self.root)
         register_frame.pack(pady=10, fill=tk.X, padx=10)
 
@@ -177,6 +191,7 @@ class UVsimUI:
                 reg_value = ttk.Label(reg_container, text=str(self.sim.registers[reg_num]))
                 reg_value.pack(side="left", padx=5, pady=5)
                 self.register_value_labels[reg_num] = reg_value
+        '''
 
     def start(self):
         self.root.mainloop()

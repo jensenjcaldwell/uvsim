@@ -163,36 +163,6 @@ class UVsimUI:
         self.code_editor.config(yscrollcommand=scrollbar.set)
         
 
-        '''
-        register_frame = ttk.Frame(self.root)
-        register_frame.pack(pady=10, fill=tk.X, padx=10)
-
-        columns = 10
-        rows = len(self.sim.registers) // columns
-        if len(self.sim.registers) % columns:
-            rows += 1
-
-        for col in range(columns):
-            for row in range(rows):
-                reg_num = col * rows + row
-
-                if reg_num >= len(self.sim.registers):
-                    break
-
-                reg_container = ttk.Frame(register_frame, relief="solid", borderwidth=1)
-                reg_container.grid(row=row, column=col, padx=5, pady=5, sticky="ew")
-
-                reg_label = ttk.Label(reg_container, text=f"R{reg_num}:")
-                reg_label.pack(side="left", padx=5, pady=5)
-
-                separator = ttk.Separator(reg_container, orient="vertical")
-                separator.pack(side="left", fill="y", padx=2)
-
-                reg_value = ttk.Label(reg_container, text=str(self.sim.registers[reg_num]))
-                reg_value.pack(side="left", padx=5, pady=5)
-                self.register_value_labels[reg_num] = reg_value
-        '''
-
     def start(self):
         self.root.mainloop()
 

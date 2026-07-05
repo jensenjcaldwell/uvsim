@@ -150,33 +150,18 @@ class UVsimUI:
         self.accumulator_value = ttk.Label(accumulator_frame, text=str(self.sim.accumulator))
         self.accumulator_value.pack(side="top", padx=5, pady=5)
 
-        register_frame = ttk.Frame(self.root)
-        register_frame.pack(pady=10, fill=tk.X, padx=10)
+        editor_frame = ttk.Frame(self.root)
+        editor_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
 
-        columns = 10
-        rows = len(self.sim.registers) // columns
-        if len(self.sim.registers) % columns:
-            rows += 1
+        ttk.Label(editor_frame, text="BasicML Code Editor: ").pack(anchor="w")
 
-        for col in range(columns):
-            for row in range(rows):
-                reg_num = col * rows + row
+        self.code_editor = tk.Text(editor_frame, width=60, height=20,font=("Consolas",11))
+        self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
 
-                if reg_num >= len(self.sim.registers):
-                    break
-
-                reg_container = ttk.Frame(register_frame, relief="solid", borderwidth=1)
-                reg_container.grid(row=row, column=col, padx=5, pady=5, sticky="ew")
-
-                reg_label = ttk.Label(reg_container, text=f"R{reg_num}:")
-                reg_label.pack(side="left", padx=5, pady=5)
-
-                separator = ttk.Separator(reg_container, orient="vertical")
-                separator.pack(side="left", fill="y", padx=2)
-
-                reg_value = ttk.Label(reg_container, text=str(self.sim.registers[reg_num]))
-                reg_value.pack(side="left", padx=5, pady=5)
-                self.register_value_labels[reg_num] = reg_value
+        scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
+        scrollbar.pack(side="left", fill="y")
+        self.code_editor.config(yscrollcommand=scrollbar.set)
+        
 
     def start(self):
         self.root.mainloop()

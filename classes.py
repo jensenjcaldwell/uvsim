@@ -1,6 +1,5 @@
 import operations
 
-
 class Instruction:
     def __init__(self, sign, code, operand):
         self.sign = sign
@@ -72,6 +71,14 @@ class simulator:
         if isinstance(self.registers[self.pointer], Instruction) and self.registers[self.pointer].code == 10:
             return True
         return False
+    
+    def load_from_list(self, lines):
+        for address, line in enumerate(lines):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            instruction = self.split_instruction(stripped)
+            self.registers[address] = instruction
 
     def execute_instruction(self, instruction=None):
         if instruction is None:

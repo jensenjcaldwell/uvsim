@@ -40,8 +40,10 @@ class UVsimUI:
 
     def refresh_ui(self):
         self.accumulator_value.config(text=str(self.sim.accumulator))
+        '''
         for reg_num, label in self.register_value_labels.items():
             label.config(text=self._format_register_value(self.sim.registers[reg_num]))
+        '''
 
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
@@ -77,6 +79,20 @@ class UVsimUI:
         try:
             self.sim = classes.simulator()
 
+            raw_code = self.code_editor.get("1.0", tk.END).strip()
+
+            lines = [line.strip() for line in raw_code.split("\n") if line.strip()]
+
+            if len(lines) > 100:
+                messagebox.showerror(
+                    "Validation Error",
+                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 100."
+                )
+                return
+            
+            self.sim.load_from_list(lines)
+
+            '''
             try:
                 self.sim.read_program(self.file_entry.get())
             except ValueError as e:
@@ -85,9 +101,11 @@ class UVsimUI:
                     f"The program file is malformed or improperly formatted.\n\nDetails: {e}",
                 )
                 return
+            '''
 
             steps = 0
             max_steps = 100000
+
             while True:
                 status = self.sim.advance()
 
@@ -162,7 +180,6 @@ class UVsimUI:
         scrollbar.pack(side="left", fill="y")
         self.code_editor.config(yscrollcommand=scrollbar.set)
         
-
     def start(self):
         self.root.mainloop()
 

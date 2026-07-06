@@ -23,6 +23,9 @@ class UVsimUI:
         self.root.title("UVsim")
         self.root.geometry("800x700")
 
+        style = ttk.Style()
+        style.configure("TButton", foreground="black")
+
         self.sim = classes.simulator()
         self.register_value_labels = {}
         self.last_output = ""
@@ -40,8 +43,6 @@ class UVsimUI:
 
     def refresh_ui(self):
         self.accumulator_value.config(text=str(self.sim.accumulator))
-        for reg_num, label in self.register_value_labels.items():
-            label.config(text=self._format_register_value(self.sim.registers[reg_num]))
 
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
@@ -77,17 +78,22 @@ class UVsimUI:
         try:
             self.sim = classes.simulator()
 
-            try:
-                self.sim.read_program(self.file_entry.get())
-            except ValueError as e:
+            raw_code = self.code_editor.get("1.0", tk.END).strip()
+
+            lines = [line.strip() for line in raw_code.split("\n") if line.strip()]
+
+            if len(lines) > 100:
                 messagebox.showerror(
-                    "Load Error",
-                    f"The program file is malformed or improperly formatted.\n\nDetails: {e}",
+                    "Validation Error",
+                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 100."
                 )
                 return
+            
+            self.sim.load_from_list(lines)
 
             steps = 0
             max_steps = 100000
+
             while True:
                 status = self.sim.advance()
 
@@ -115,10 +121,7 @@ class UVsimUI:
 
             self.refresh_ui()
         except FileNotFoundError:
-            messagebox.showerror(
-                "File Not Found",
-                f"The file '{self.file_entry.get()}' could not be found. Please check the path and try again.",
-            )
+            messagebox.showerror("File Not Found", "The selected file could not be found. Please choose another file.")
         except ValueError as e:
             messagebox.showerror("Execution Error", str(e))
         except Exception as e:
@@ -131,62 +134,61 @@ class UVsimUI:
     def browse_file(self):
         selected_file = filedialog.askopenfilename()
         if selected_file:
-            self.file_entry.delete(0, tk.END)
-            self.file_entry.insert(0, selected_file)
+            with open(selected_file, "r", encoding="utf-8") as file_handle:
+                file_contents = file_handle.read()
+
+            self.code_editor.delete("1.0", tk.END)
+            self.code_editor.insert("1.0", file_contents)
 
     def _build_ui(self):
-        file_frame = ttk.Frame(self.root)
-        file_frame.pack(pady=10, fill=tk.X, padx=10)
+        control_frame = ttk.Frame(self.root)
+        control_frame.pack(pady=10, fill=tk.X, padx=20)
 
-        self.file_entry = ttk.Entry(file_frame, width=50)
-        self.file_entry.insert(0, "filepath.txt")
-        self.file_entry.pack(side="left", padx=10)
+        self.btn_open = ttk.Button(control_frame, text="Open File", command=self.browse_file)
+        self.btn_open.pack(side="left", padx=5)
 
-        browse_button = ttk.Button(file_frame, text="Browse", command=self.browse_file)
-        browse_button.pack(side="left", padx=10)
+        self.btn_save = ttk.Button(control_frame, text="Save As")
+        self.btn_save.pack(side="left", padx=5)
 
-        run_button = ttk.Button(file_frame, text="Run", command=self.run_program)
-        run_button.pack(side="left", padx=10)
+        ttk.Separator(control_frame, orient="vertical").pack(side="left", fill="y")
 
-        reset_button = ttk.Button(file_frame, text="Reset", command=self.reset_program)
-        reset_button.pack(side="left", padx=10)
+        self.btn_run = ttk.Button(control_frame, text="Run Code", command=self.run_program)
+        self.btn_run.pack(side="left", padx=5)
 
-        accumulator_frame = ttk.Frame(self.root, relief="solid", borderwidth=1)
-        accumulator_frame.pack(pady=50, padx=50)
+        self.btn_reset = ttk.Button(control_frame, text="Reset", command=self.reset_program)
+        self.btn_reset.pack(side="left", padx=5)
 
-        accumulator_label = ttk.Label(accumulator_frame, text="Accumulator:")
-        accumulator_label.pack(side="top", padx=5, pady=5)
-        self.accumulator_value = ttk.Label(accumulator_frame, text=str(self.sim.accumulator))
-        self.accumulator_value.pack(side="top", padx=5, pady=5)
+        # Team Member 3 will plug their color function to this button
+        self.btn_theme = ttk.Button(control_frame, text="Color Theme")
+        self.btn_theme.pack(side="right", padx=5)
 
-        register_frame = ttk.Frame(self.root)
-        register_frame.pack(pady=10, fill=tk.X, padx=10)
+        accumulator_frame = ttk.LabelFrame(self.root, text=" CPU Status ", padding=(10, 5))
+        accumulator_frame.pack(pady=10, padx=20, fill=tk.X)
 
-        columns = 10
-        rows = len(self.sim.registers) // columns
-        if len(self.sim.registers) % columns:
-            rows += 1
+        self.accumulator_value = ttk.Label(accumulator_frame, text=f"Accumulator: {self.sim.accumulator}", font=("Arial", 12, "bold"))
+        self.accumulator_value.pack(side="top", pady=5)
 
-        for col in range(columns):
-            for row in range(rows):
-                reg_num = col * rows + row
+        editor_frame = ttk.LabelFrame(self.root, text=" BasicML Code Editor ", padding=(10, 10))
+        editor_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
 
-                if reg_num >= len(self.sim.registers):
-                    break
+        self.code_editor = tk.Text(editor_frame, width=60, height=15,font=("Consolas",12))
+        self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
 
-                reg_container = ttk.Frame(register_frame, relief="solid", borderwidth=1)
-                reg_container.grid(row=row, column=col, padx=5, pady=5, sticky="ew")
+        scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
+        scrollbar.pack(side="left", fill="y")
+        self.code_editor.config(yscrollcommand=scrollbar.set)
 
-                reg_label = ttk.Label(reg_container, text=f"R{reg_num}:")
-                reg_label.pack(side="left", padx=5, pady=5)
+        output_frame = ttk.LabelFrame(self.root, text=" Program Output ", padding=(10, 10))
+        output_frame.pack(pady=(0, 15), padx=20, fill=tk.X) # Pushed to the bottom
 
-                separator = ttk.Separator(reg_container, orient="vertical")
-                separator.pack(side="left", fill="y", padx=2)
-
-                reg_value = ttk.Label(reg_container, text=str(self.sim.registers[reg_num]))
-                reg_value.pack(side="left", padx=5, pady=5)
-                self.register_value_labels[reg_num] = reg_value
-
+        # Team Member 4 will wire this text box to receive the WRITE commands
+        self.output_console = tk.Text(output_frame, height=5, state="disabled", bg="#f0f0f0", font=("Consolas", 10))
+        self.output_console.pack(side="left", fill=tk.X, expand=True)
+        
+        out_scroll = ttk.Scrollbar(output_frame, command=self.output_console.yview)
+        out_scroll.pack(side="left", fill="y")
+        self.output_console.config(yscrollcommand=out_scroll.set)
+        
     def start(self):
         self.root.mainloop()
 

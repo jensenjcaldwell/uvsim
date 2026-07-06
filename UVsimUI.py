@@ -23,6 +23,9 @@ class UVsimUI:
         self.root.title("UVsim")
         self.root.geometry("800x700")
 
+        style = ttk.Style()
+        style.configure("TButton", foreground="black")
+
         self.sim = classes.simulator()
         self.register_value_labels = {}
         self.last_output = ""
@@ -40,10 +43,6 @@ class UVsimUI:
 
     def refresh_ui(self):
         self.accumulator_value.config(text=str(self.sim.accumulator))
-        '''
-        for reg_num, label in self.register_value_labels.items():
-            label.config(text=self._format_register_value(self.sim.registers[reg_num]))
-        '''
 
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
@@ -92,17 +91,6 @@ class UVsimUI:
             
             self.sim.load_from_list(lines)
 
-            '''
-            try:
-                self.sim.read_program(self.file_entry.get())
-            except ValueError as e:
-                messagebox.showerror(
-                    "Load Error",
-                    f"The program file is malformed or improperly formatted.\n\nDetails: {e}",
-                )
-                return
-            '''
-
             steps = 0
             max_steps = 100000
 
@@ -147,38 +135,55 @@ class UVsimUI:
         self.refresh_ui()
 
     def _build_ui(self):
-        file_frame = ttk.Frame(self.root)
-        file_frame.pack(pady=10, fill=tk.X, padx=10)
 
-        self.file_entry = ttk.Entry(file_frame, width=50)
-        self.file_entry.insert(0, "filepath.txt")
-        self.file_entry.pack(side="left", padx=10)
+        control_frame = ttk.Frame(self.root)
+        control_frame.pack(pady=10, fill=tk.X, padx=20)
 
-        run_button = ttk.Button(file_frame, text="Run", command=self.run_program)
-        run_button.pack(side="left", padx=10)
+        # Team Member 2 will plug their functions to these 2 buttons
+        self.btn_open = ttk.Button(control_frame, text="Open File")
+        self.btn_open.pack(side="left", padx=5)
 
-        reset_button = ttk.Button(file_frame, text="Reset", command=self.reset_program)
-        reset_button.pack(side="left", padx=10)
+        self.btn_save = ttk.Button(control_frame, text="Save As")
+        self.btn_save.pack(side="left", padx=5)
 
-        accumulator_frame = ttk.Frame(self.root, relief="solid", borderwidth=1)
-        accumulator_frame.pack(pady=50, padx=50)
+        ttk.Separator(control_frame, orient="vertical").pack(side="left", fill="y")
 
-        accumulator_label = ttk.Label(accumulator_frame, text="Accumulator:")
-        accumulator_label.pack(side="top", padx=5, pady=5)
-        self.accumulator_value = ttk.Label(accumulator_frame, text=str(self.sim.accumulator))
-        self.accumulator_value.pack(side="top", padx=5, pady=5)
+        self.btn_run = ttk.Button(control_frame, text="Run Code", command=self.run_program)
+        self.btn_run.pack(side="left", padx=5)
 
-        editor_frame = ttk.Frame(self.root)
-        editor_frame.pack(pady=10, fill=tk.BOTH, expand=True, padx=20)
+        self.btn_reset = ttk.Button(control_frame, text="Reset", command=self.reset_program)
+        self.btn_reset.pack(side="left", padx=5)
 
-        ttk.Label(editor_frame, text="BasicML Code Editor: ").pack(anchor="w")
+        # Team Member 3 will plug their color function to this button
+        self.btn_theme = ttk.Button(control_frame, text="Color Theme")
+        self.btn_theme.pack(side="right", padx=5)
 
-        self.code_editor = tk.Text(editor_frame, width=60, height=20,font=("Consolas",11))
+        accumulator_frame = ttk.LabelFrame(self.root, text=" CPU Status ", padding=(10, 5))
+        accumulator_frame.pack(pady=10, padx=20, fill=tk.X)
+
+        self.accumulator_value = ttk.Label(accumulator_frame, text=f"Accumulator: {self.sim.accumulator}", font=("Arial", 12, "bold"))
+        self.accumulator_value.pack(side="top", pady=5)
+
+        editor_frame = ttk.LabelFrame(self.root, text=" BasicML Code Editor ", padding=(10, 10))
+        editor_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
+
+        self.code_editor = tk.Text(editor_frame, width=60, height=15,font=("Consolas",12))
         self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
 
         scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
         scrollbar.pack(side="left", fill="y")
         self.code_editor.config(yscrollcommand=scrollbar.set)
+
+        output_frame = ttk.LabelFrame(self.root, text=" Program Output ", padding=(10, 10))
+        output_frame.pack(pady=(0, 15), padx=20, fill=tk.X) # Pushed to the bottom
+
+        # Team Member 4 will wire this text box to receive the WRITE commands
+        self.output_console = tk.Text(output_frame, height=5, state="disabled", bg="#f0f0f0", font=("Consolas", 10))
+        self.output_console.pack(side="left", fill=tk.X, expand=True)
+        
+        out_scroll = ttk.Scrollbar(output_frame, command=self.output_console.yview)
+        out_scroll.pack(side="left", fill="y")
+        self.output_console.config(yscrollcommand=out_scroll.set)
         
     def start(self):
         self.root.mainloop()

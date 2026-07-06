@@ -140,6 +140,18 @@ class UVsimUI:
             self.code_editor.delete("1.0", tk.END)
             self.code_editor.insert("1.0", file_contents)
 
+    def save_program(self):
+        target_file = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+        )
+        if not target_file:
+            return
+
+        program_text = self.code_editor.get("1.0", tk.END).rstrip()
+        with open(target_file, "w", encoding="utf-8") as file_handle:
+            file_handle.write(program_text)
+
     def _build_ui(self):
         control_frame = ttk.Frame(self.root)
         control_frame.pack(pady=10, fill=tk.X, padx=20)
@@ -147,7 +159,7 @@ class UVsimUI:
         self.btn_open = ttk.Button(control_frame, text="Open File", command=self.browse_file)
         self.btn_open.pack(side="left", padx=5)
 
-        self.btn_save = ttk.Button(control_frame, text="Save As")
+        self.btn_save = ttk.Button(control_frame, text="Save As", command=self.save_program)
         self.btn_save.pack(side="left", padx=5)
 
         ttk.Separator(control_frame, orient="vertical").pack(side="left", fill="y")

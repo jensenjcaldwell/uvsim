@@ -43,10 +43,6 @@ class UVsimUI:
 
     def refresh_ui(self):
         self.accumulator_value.config(text=str(self.sim.accumulator))
-        '''
-        for reg_num, label in self.register_value_labels.items():
-            label.config(text=self._format_register_value(self.sim.registers[reg_num]))
-        '''
 
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
@@ -94,17 +90,6 @@ class UVsimUI:
                 return
             
             self.sim.load_from_list(lines)
-
-            '''
-            try:
-                self.sim.read_program(self.file_entry.get())
-            except ValueError as e:
-                messagebox.showerror(
-                    "Load Error",
-                    f"The program file is malformed or improperly formatted.\n\nDetails: {e}",
-                )
-                return
-            '''
 
             steps = 0
             max_steps = 100000
@@ -178,13 +163,6 @@ class UVsimUI:
 
         self.accumulator_value = ttk.Label(accumulator_frame, text=f"Accumulator: {self.sim.accumulator}", font=("Arial", 12, "bold"))
         self.accumulator_value.pack(side="top", pady=5)
-
-        '''
-        accumulator_label = ttk.Label(accumulator_frame, text="Accumulator:")
-        accumulator_label.pack(side="top", padx=5, pady=5)
-        self.accumulator_value = ttk.Label(accumulator_frame, text=str(self.sim.accumulator))
-        self.accumulator_value.pack(side="top", padx=5, pady=5)
-        '''
 
         editor_frame = ttk.LabelFrame(self.root, text=" BasicML Code Editor ", padding=(10, 10))
         editor_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)

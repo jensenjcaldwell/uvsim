@@ -1,6 +1,6 @@
 import classes
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, filedialog
 import sys
 import re
 from io import StringIO
@@ -128,6 +128,12 @@ class UVsimUI:
         self.sim = classes.simulator()
         self.refresh_ui()
 
+    def browse_file(self):
+        selected_file = filedialog.askopenfilename()
+        if selected_file:
+            self.file_entry.delete(0, tk.END)
+            self.file_entry.insert(0, selected_file)
+
     def _build_ui(self):
         file_frame = ttk.Frame(self.root)
         file_frame.pack(pady=10, fill=tk.X, padx=10)
@@ -135,6 +141,9 @@ class UVsimUI:
         self.file_entry = ttk.Entry(file_frame, width=50)
         self.file_entry.insert(0, "filepath.txt")
         self.file_entry.pack(side="left", padx=10)
+
+        browse_button = ttk.Button(file_frame, text="Browse", command=self.browse_file)
+        browse_button.pack(side="left", padx=10)
 
         run_button = ttk.Button(file_frame, text="Run", command=self.run_program)
         run_button.pack(side="left", padx=10)
@@ -184,5 +193,5 @@ class UVsimUI:
 
 if __name__ == "__main__":
     app = UVsimUI()
-    app.start()
+    app.start()  
 

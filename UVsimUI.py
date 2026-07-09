@@ -1,3 +1,4 @@
+from turtle import color
 import classes
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -23,8 +24,18 @@ class UVsimUI:
         self.root.title("UVsim")
         self.root.geometry("800x700")
 
-        style = ttk.Style()
-        style.configure("TButton", foreground="black")
+        self.primary_color = ""
+        self.off_color = ""
+
+        file = open('color_scheme.txt')
+        content = file.readlines()
+        self.primary_color = content[0].strip()
+        self.off_color = content[1].strip()
+        file.close()
+        self.root.configure(bg=self.primary_color)
+
+        self.style = ttk.Style()
+        self.style.configure("TButton", foreground=self.primary_color)
 
         self.sim = classes.simulator()
         self.register_value_labels = {}
@@ -35,6 +46,14 @@ class UVsimUI:
 
         self._build_ui()
         self.refresh_ui()
+
+    def update_changes(self):
+        self.code_editor.configure(bg=self.off_color, fg=self.primary_color)
+        self.root.update_idletasks()
+        self.output_console.config(bg=self.off_color, fg=self.primary_color)
+        self.output_console.config(state="disabled")
+        self.style.configure("TButton", foreground=self.primary_color)
+        
 
     def _format_register_value(self, value):
         if isinstance(value, classes.Instruction):
@@ -152,6 +171,60 @@ class UVsimUI:
         with open(target_file, "w", encoding="utf-8") as file_handle:
             file_handle.write(program_text)
 
+    def color_theme_window(self):
+        default_primary = "#4C721D"
+        default_off_color = "#FFFFFF"
+
+        popup = tk.Toplevel(self.root)
+        popup.title("Color theme selection")
+        top_label = ttk.Label(popup, text="select color scheme")
+        primary_label = ttk.Label(popup, text="Primary:")
+        primary_box = ttk.Entry(popup)
+        primary_box.insert(0,self.primary_color)
+        off_color_label = ttk.Label(popup, text="Off-color:")
+        off_color_box = ttk.Entry(popup)
+        off_color_box.insert(0,self.off_color)
+        
+        def reset_colors():
+            classes.saved_colors(default_primary,default_off_color)
+            primary_box.delete(0,tk.END)
+            off_color_box.delete(0,tk.END)
+            primary_box.insert(0,default_primary)
+            off_color_box.insert(0,default_off_color)
+            self.primary_color = default_primary
+            self.off_color = default_off_color
+            self.root.configure(bg=self.primary_color)
+            self.update_changes()
+
+
+        def get_color_info():
+            primary_input = primary_box.get().strip()
+            off_color_input = off_color_box.get().strip()
+
+            if (classes.is_Valid_Hex(primary_input) and classes.is_Valid_Hex(off_color_input)):
+                classes.saved_colors(primary_input,off_color_input)
+                self.primary_color = primary_input
+                self.off_color = off_color_input
+                self.root.configure(bg=self.primary_color)
+                self.update_changes()
+
+            else:
+                bad_popup = tk.Toplevel(self.root)
+                bad_popup.title("invalid hex")
+                bad_label = ttk.Label(bad_popup, text="one or two of the hex colors is incorrect, setting colors to default")
+                bad_label.grid(row=0,column=0,columnspan=2,pady=20)
+                reset_colors()
+
+        save = ttk.Button(popup, text="save",command=get_color_info)
+        reset = ttk.Button(popup, text="reset",command=reset_colors)
+        top_label.grid(row=0,column=0,columnspan=2,pady=20)
+        primary_label.grid(row=1,column=0,pady=5)
+        primary_box.grid(row=1,column=1,pady=5)
+        off_color_label.grid(row=2,column=0,pady=20)
+        off_color_box.grid(row=2,column=1,pady=20)
+        save.grid(row=3,column=0,columnspan=1,pady=20)
+        reset.grid(row=3,column=1,columnspan=1,pady=20)
+
     def _build_ui(self):
         control_frame = ttk.Frame(self.root)
         control_frame.pack(pady=10, fill=tk.X, padx=20)
@@ -171,7 +244,7 @@ class UVsimUI:
         self.btn_reset.pack(side="left", padx=5)
 
         # Team Member 3 will plug their color function to this button
-        self.btn_theme = ttk.Button(control_frame, text="Color Theme")
+        self.btn_theme = ttk.Button(control_frame, text="Color Theme",command=self.color_theme_window)
         self.btn_theme.pack(side="right", padx=5)
 
         accumulator_frame = ttk.LabelFrame(self.root, text=" CPU Status ", padding=(10, 5))
@@ -183,7 +256,7 @@ class UVsimUI:
         editor_frame = ttk.LabelFrame(self.root, text=" BasicML Code Editor ", padding=(10, 10))
         editor_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
 
-        self.code_editor = tk.Text(editor_frame, width=60, height=15,font=("Consolas",12))
+        self.code_editor = tk.Text(editor_frame, width=60, height=15,font=("Consolas",12),bg=self.off_color,fg=self.primary_color)
         self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
 
         scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
@@ -194,7 +267,7 @@ class UVsimUI:
         output_frame.pack(pady=(0, 15), padx=20, fill=tk.X) # Pushed to the bottom
 
         # Team Member 4 will wire this text box to receive the WRITE commands
-        self.output_console = tk.Text(output_frame, height=5, state="disabled", bg="#f0f0f0", font=("Consolas", 10))
+        self.output_console = tk.Text(output_frame, height=5, state="disabled", bg=self.off_color, font=("Consolas", 10))
         self.output_console.pack(side="left", fill=tk.X, expand=True)
         
         out_scroll = ttk.Scrollbar(output_frame, command=self.output_console.yview)
@@ -208,4 +281,3 @@ class UVsimUI:
 if __name__ == "__main__":
     app = UVsimUI()
     app.start()  
-

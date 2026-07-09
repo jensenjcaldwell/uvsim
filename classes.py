@@ -249,3 +249,24 @@ class operations_machine:
 
     def halt():
         return False
+
+def is_Valid_Hex(color):
+            if (color == ""):
+                return False
+            if (color[0] != '#'):
+                return False
+            if (not(len(color) == 4 or len(color) == 7)):
+                return False
+            for i in range(1, len(color)):
+                if (not((color[i] >= '0' and color[i] <= '9') or (color[i] >= 'a' and color[i] <= 'f') or (color[i] >= 'A' and color[i] <= 'F'))):
+                    return False
+            return True
+
+def saved_colors(primary,off):
+
+    color_file = open("color_scheme.txt", "r+")
+    color_file.truncate(0)
+    color_file.write(primary)
+    color_file.write("\n")
+    color_file.write(off)
+    color_file.close()

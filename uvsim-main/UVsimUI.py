@@ -17,15 +17,17 @@ class OutputCapture(StringIO):
         self.original_stdout = original_stdout
 
     def write(self, s):
-        self.ui.last_output = s.rstrip("\n")
-
         if s and hasattr(self.ui, "output_console"):
             self.ui.output_console.config(state="normal")
             self.ui.output_console.insert(tk.END, s)
             self.ui.output_console.see(tk.END)
             self.ui.output_console.config(state="disabled")
+            self.ui.root.update_idletasks()
 
-        return self.original_stdout.write(s)
+        return len(s)
+
+    def flush(self):
+        pass
 
 
 class UVsimUI:
@@ -51,10 +53,11 @@ class UVsimUI:
         self.register_value_labels = {}
         self.last_output = ""
 
+        self._build_ui()
+
         self._original_stdout = sys.stdout
         sys.stdout = OutputCapture(self, self._original_stdout)
 
-        self._build_ui()
         self.refresh_ui()
 
     def update_changes(self):

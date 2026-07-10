@@ -28,12 +28,13 @@ This is the primary way to interact with UVSim. It features a full visual memory
 4. The UVSim Graphical User Interface will appear on your screen.
 
 How to Use the GUI:
-• Loading the .txt File: Type in the name of the BasicML .txt file (ex. Test1.txt, test4.txt).
-• Running the Code: Once you type it in the search bar, click the "Run" button to begin execution.
-• Providing Input (Read): If the program encounters a Read command, a secure dialog box will pop up on your screen. You must type a valid signed 4-digit integer (+1234) into the box and click submit.
+• Loading Existing Code: Click the "Open File" button and choose any BasicML .txt file to load it into the built-in editor.
+• Using the New Code Editor: Write or edit BasicML instructions directly in the "BasicML Code Editor" text area. Enter one signed 4-digit instruction per line (example: +1007, +2008, +4300).
+• Saving Code from the Editor: Click "Save As", choose a file name and location, then save as a .txt file. This exports exactly what is currently in the editor.
+• Running the Code: After loading or writing code in the editor, click the "Run Code" button to begin execution.
+• Providing Input (Read): If the program encounters a Read command, a dialog box will pop up on your screen. You must type a valid 4-digit integer (1234) into the box and click submit.
 • Viewing Output (Write): If the program encounters a Write command, the result will be printed to the accumulator output display area on the interface as well as save the value on the accumulator to the targeted memory address.
-• Monitoring Memory: As the program runs, you can view the live, updated values of all 100 memory registers and the Accumulator directly in the application's data grid.
-• Resetting: Once completed, you can run another test.txt file, resetting the grid and running that new file.
+• Resetting: Once completed, click "Reset" to clear simulator state before running another program.
 
 Option 2: Launching the CLI
 If you prefer to run the simulator entirely inside your terminal without any external windows, you can use the CLI tool.

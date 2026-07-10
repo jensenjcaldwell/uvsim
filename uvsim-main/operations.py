@@ -23,7 +23,7 @@ def read(operand, registers, inputval=None):
             raw_input = inputval.strip()
             inputval = None  # Clear after first use to avoid reuse in subsequent READs
         else:
-            raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
+            raw_input = input("Insert a 4-digit number, with optional sign (e.g., 1234 or +1234): ").strip()
 
         number_part = raw_input[1:] if raw_input and raw_input[0] in "+-" else raw_input
 

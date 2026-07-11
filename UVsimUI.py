@@ -1,4 +1,3 @@
-from turtle import color
 import classes
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -15,7 +14,11 @@ class OutputCapture(StringIO):
 
     def write(self, s):
         self.ui.last_output = s.rstrip("\n")
-        return self.original_stdout.write(s)
+        self.ui.append_output(s)
+        return len(s)
+
+    def flush(self):
+        return None
 
 
 class UVsimUI:
@@ -63,13 +66,26 @@ class UVsimUI:
     def refresh_ui(self):
         self.accumulator_value.config(text=str(self.sim.accumulator))
 
+    def clear_output(self):
+        self.output_console.config(state="normal")
+        self.output_console.delete("1.0", tk.END)
+        self.output_console.config(state="disabled")
+
+    def append_output(self, text):
+        if not hasattr(self, "output_console"):
+            return
+        self.output_console.config(state="normal")
+        self.output_console.insert(tk.END, text)
+        self.output_console.see(tk.END)
+        self.output_console.config(state="disabled")
+
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
         popup.title("READ Input")
         popup.transient(self.root)
         popup.grab_set()
 
-        ttk.Label(popup, text="Enter a signed 4-digit number:").pack(padx=12, pady=(12, 6))
+        ttk.Label(popup, text="Enter a 4-digit number (signed or unsigned):").pack(padx=12, pady=(12, 6))
         value_entry = ttk.Entry(popup, width=16)
         value_entry.pack(padx=12, pady=6)
         value_entry.focus_set()
@@ -81,9 +97,11 @@ class UVsimUI:
 
         def submit_value():
             raw = value_entry.get().strip()
-            if not re.fullmatch(r"[+-]\d{4}", raw):
-                error_label.config(text="Use format +1234 or -0042")
+            if not re.fullmatch(r"[+-]?\d{4}", raw):
+                error_label.config(text="Use format 1234, +1234, or -0042")
                 return
+            if raw[0] not in "+-":
+                raw = f"+{raw}"
             result["value"] = raw
             self.sim.input_flag = False
             popup.destroy()
@@ -96,6 +114,7 @@ class UVsimUI:
     def run_program(self):
         try:
             self.sim = classes.simulator()
+            self.clear_output()
 
             raw_code = self.code_editor.get("1.0", tk.END).strip()
 
@@ -266,7 +285,6 @@ class UVsimUI:
         output_frame = ttk.LabelFrame(self.root, text=" Program Output ", padding=(10, 10))
         output_frame.pack(pady=(0, 15), padx=20, fill=tk.X) # Pushed to the bottom
 
-        # Team Member 4 will wire this text box to receive the WRITE commands
         self.output_console = tk.Text(output_frame, height=5, state="disabled", bg=self.off_color, font=("Consolas", 10))
         self.output_console.pack(side="left", fill=tk.X, expand=True)
         

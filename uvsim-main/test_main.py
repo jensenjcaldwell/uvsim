@@ -9,6 +9,23 @@ import operations
 
 
 class TestMain(unittest.TestCase):
+    def test_convert_word_4_to_6_success(self):
+        self.assertEqual(classes.convert_word_4_to_6("+2045"), "+200045")
+        self.assertEqual(classes.convert_word_4_to_6("-4300"), "-430000")
+
+    def test_convert_word_4_to_6_rejects_invalid_word(self):
+        with self.assertRaises(ValueError):
+            classes.convert_word_4_to_6("2045")
+        with self.assertRaises(ValueError):
+            classes.convert_word_4_to_6("+20A5")
+        with self.assertRaises(ValueError):
+            classes.convert_word_4_to_6("+12345")
+
+    def test_convert_program_4_to_6_success(self):
+        lines = ["+1007", "", "+4300"]
+        converted = classes.convert_program_4_to_6(lines)
+        self.assertEqual(converted, ["+100007", "", "+430000"])
+
     def test_split_instruction_parses_signed_word(self):
         sim = classes.simulator()
         instruction = sim.split_instruction("+4300")

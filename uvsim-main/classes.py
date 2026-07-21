@@ -3,6 +3,37 @@ import operations
 
 _COLOR_SCHEME_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "color_scheme.txt")
 
+
+def convert_word_4_to_6(word):
+    """Convert a signed 4-digit UVSim word into signed 6-digit format.
+
+    Old format:  sign + 2-digit opcode + 2-digit operand (example: +2045)
+    New format:  sign + 2-digit opcode + 4-digit operand (example: +200045)
+    """
+    if not isinstance(word, str):
+        raise TypeError("Word must be a string")
+
+    stripped = word.strip()
+    if len(stripped) != 5 or stripped[0] not in "+-" or not stripped[1:].isdigit():
+        raise ValueError(f"Invalid 4-digit word: {word}")
+
+    sign = stripped[0]
+    opcode = stripped[1:3]
+    operand = stripped[3:5]
+    return f"{sign}{opcode}00{operand}"
+
+
+def convert_program_4_to_6(lines):
+    """Convert a list of 4-digit program lines to 6-digit format."""
+    converted = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            converted.append("")
+            continue
+        converted.append(convert_word_4_to_6(stripped))
+    return converted
+
 class Instruction:
     def __init__(self, sign, code, operand):
         self.sign = sign

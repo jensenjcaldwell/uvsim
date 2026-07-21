@@ -1,17 +1,17 @@
 def _validate_address(operand):
-    if not (0 <= operand <= 99):
+    if not (0 <= operand <= 249):
         raise ValueError(f"Invalid memory address {operand}")
     
 def _truncate(value):
     # Overflow handling: chops off higher order digits (12345 -> 2345)
     sign = -1 if value < 0 else 1
-    return (abs(value) % 10000) * sign
+    return (abs(value) % 1000000) * sign
 
 def _get_memory_val(memory_content):
     # Extracts the integer, fixing the PEMDAS math sign bug
     if hasattr(memory_content, "sign"):
         sign_multiplier = 1 if memory_content.sign == "+" else -1
-        return ((memory_content.code * 100) + memory_content.operand) * sign_multiplier
+        return ((memory_content.code * 1000) + memory_content.operand) * sign_multiplier
     return int(memory_content)
 
 
@@ -25,7 +25,7 @@ def read(operand, registers, inputval=None):
         else:
             raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
 
-        if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
+        if len(raw_input) == 7 and raw_input[0] in "+-" and raw_input[1:].isdigit():
             registers[operand] = int(raw_input)
             break
         else:

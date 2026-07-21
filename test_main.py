@@ -230,5 +230,23 @@ class TestOperations(unittest.TestCase):
         self.assertIsNone(operations.branch_neg(22, 50))     # Should return None (Don't jump)
 
 
+    def test_truncate_6_digit_overflow(self):
+      # Test that numbers larger than 999999 get chopped correctly
+      large_number = 1234567
+      truncated = operations._truncate(large_number)
+    
+      # 1234567 should be truncated to 234567
+      assert truncated == 234567
+
+    def test_get_memory_val_3_digit_operand(self):
+      # Simulate an instruction object stored in memory: +010005
+      # Code = 10, Operand = 5
+      mock_instruction = Instruction("+", 10, 5)
+    
+      # Test that the multiplier properly reconstructs it to 10005 (not 1005)
+      value = operations._get_memory_val(mock_instruction)
+      assert value == 10005
+
+
 if __name__ == "__main__":
     unittest.main()

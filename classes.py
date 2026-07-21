@@ -53,13 +53,13 @@ class simulator:
         # Parse a signed 4-digit word like +4300 into opcode + operand parts.
         if not string:
             raise ValueError("Empty instruction line")
-        if len(string) != 5 or string[0] not in "+-" or not string[1:].isdigit():
+        if len(string) != 7 or string[0] not in "+-" or not string[1:].isdigit():
             raise ValueError(f"Invalid instruction format: {string}")
 
         output = Instruction(None, None, None)
         output.sign = string[0]
-        output.code = int(string[1:3])
-        output.operand = int(string[3:])
+        output.code = int(string[1:4])
+        output.operand = int(string[4:])
         return output
 
     def read_program(self, filename):
@@ -189,14 +189,14 @@ def _validate_address(operand):
 def _truncate(value):
     # Overflow handling: chops off higher order digits (12345 -> 2345)
     sign = -1 if value < 0 else 1
-    return (abs(value) % 10000) * sign
+    return (abs(value) % 1000000) * sign
 
 
 def _get_memory_val(memory_content):
     # Extracts the integer, fixing the PEMDAS math sign bug
     if hasattr(memory_content, "sign"):
         sign_multiplier = 1 if memory_content.sign == "+" else -1
-        return ((memory_content.code * 100) + memory_content.operand) * sign_multiplier
+        return ((memory_content.code * 1000) + memory_content.operand) * sign_multiplier
     return int(memory_content)
 
 

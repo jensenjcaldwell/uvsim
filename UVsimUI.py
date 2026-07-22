@@ -120,10 +120,10 @@ class UVsimUI:
 
             lines = [line.strip() for line in raw_code.split("\n") if line.strip()]
 
-            if len(lines) > 100:
+            if len(lines) > 250:
                 messagebox.showerror(
                     "Validation Error",
-                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 100."
+                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 250."
                 )
                 return
             

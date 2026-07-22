@@ -210,13 +210,13 @@ class operations_machine:
         _validate_address(operand)
 
         while True:
-            raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
+            raw_input = input("Insert a signed 6-digit number (e.g., +123124): ").strip()
 
-            if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
+            if len(raw_input) == 7 and raw_input[0] in "+-" and raw_input[1:].isdigit():
                 self.registers[operand] = int(raw_input)
                 break
             else:
-                print("[!] Invalid input. You must include a sign (+ or -) and exactly 4 digits. Try again.")
+                print("[!] Invalid input. You must include a sign (+ or -) and exactly 6 digits. Try again.")
 
     # WRITE
     def write(self, operand):

@@ -40,7 +40,7 @@ class Instruction:
 
 class simulator:
     def __init__(self):
-        self.registers = {i: 0 for i in range(100)}
+        self.registers = {i: 0 for i in range(250)}
         self.accumulator = 0
         self.DEBUG = False
         self.pointer = 0
@@ -50,7 +50,7 @@ class simulator:
         self.last_error = None
 
     def split_instruction(self, string):
-        # Parse a signed 4-digit word like +4300 into opcode + operand parts.
+        # Parse a signed 6-digit word like +431100 into opcode + operand parts.
         if not string:
             raise ValueError("Empty instruction line")
         if len(string) != 7 or string[0] not in "+-" or not string[1:].isdigit():
@@ -182,7 +182,7 @@ class simulator:
 
 
 def _validate_address(operand):
-    if not (0 <= operand <= 99):
+    if not (0 <= operand <= 249):
         raise ValueError(f"Invalid memory address {operand}")
 
 

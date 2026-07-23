@@ -15,7 +15,7 @@ def run_program(filename):
 
     if status == "INPUT_NEEDED" and sim.input_flag:
       # Use terminal input for READ instructions in CLI mode.
-      sim.inputval = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
+      sim.inputval = input("Insert a 4-digit number, with optional sign (e.g., 1234 or +1234): ").strip()
       sim.input_flag = True
       continue
 

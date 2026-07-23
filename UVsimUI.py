@@ -1,9 +1,13 @@
+from turtle import color
 import classes
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
+import os
 import sys
 import re
 from io import StringIO
+
+_COLOR_SCHEME_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "color_scheme.txt")
 
 
 class OutputCapture(StringIO):
@@ -13,12 +17,17 @@ class OutputCapture(StringIO):
         self.original_stdout = original_stdout
 
     def write(self, s):
-        self.ui.last_output = s.rstrip("\n")
-        self.ui.append_output(s)
+        if s and hasattr(self.ui, "output_console"):
+            self.ui.output_console.config(state="normal")
+            self.ui.output_console.insert(tk.END, s)
+            self.ui.output_console.see(tk.END)
+            self.ui.output_console.config(state="disabled")
+            self.ui.root.update_idletasks()
+
         return len(s)
 
     def flush(self):
-        return None
+        pass
 
 
 class UVsimUI:
@@ -30,7 +39,7 @@ class UVsimUI:
         self.primary_color = ""
         self.off_color = ""
 
-        file = open('color_scheme.txt')
+        file = open(_COLOR_SCHEME_PATH)
         content = file.readlines()
         self.primary_color = content[0].strip()
         self.off_color = content[1].strip()
@@ -44,19 +53,30 @@ class UVsimUI:
         self.register_value_labels = {}
         self.last_output = ""
 
+        self.tabs = []
+        self.active_tab_id = None
+        self._next_tab_id = 0
+
+        self._build_ui()
+
         self._original_stdout = sys.stdout
         sys.stdout = OutputCapture(self, self._original_stdout)
 
-        self._build_ui()
         self.refresh_ui()
 
     def update_changes(self):
-        self.code_editor.configure(bg=self.off_color, fg=self.primary_color)
-        self.root.update_idletasks()
+        for tab in self.tabs:
+            tab["editor"].configure(
+                bg=self.off_color,
+                fg=self.primary_color
+            )
+
         self.output_console.config(bg=self.off_color, fg=self.primary_color)
         self.output_console.config(state="disabled")
         self.style.configure("TButton", foreground=self.primary_color)
-        
+        self._restyle_tabs()
+        self.root.update_idletasks()
+
 
     def _format_register_value(self, value):
         if isinstance(value, classes.Instruction):
@@ -64,20 +84,129 @@ class UVsimUI:
         return str(value)
 
     def refresh_ui(self):
-        self.accumulator_value.config(text=str(self.sim.accumulator))
+        self.accumulator_value.config(
+            text=f"Accumulator: {self.sim.accumulator}"
+        )
 
-    def clear_output(self):
-        self.output_console.config(state="normal")
-        self.output_console.delete("1.0", tk.END)
-        self.output_console.config(state="disabled")
+    def create_editor_tab(self, title="Untitled", file_contents=""):
+        tab_id = self._next_tab_id
+        self._next_tab_id += 1
 
-    def append_output(self, text):
-        if not hasattr(self, "output_console"):
+        editor_frame = ttk.Frame(self.editor_container)
+
+        editor = tk.Text(
+            editor_frame,
+            width=60,
+            height=15,
+            font=("Consolas", 12),
+            bg=self.off_color,
+            fg=self.primary_color
+        )
+        editor.pack(side="left", fill=tk.BOTH, expand=True)
+
+        scrollbar = ttk.Scrollbar(
+            editor_frame,
+            command=editor.yview
+        )
+        scrollbar.pack(side="right", fill="y")
+
+        editor.config(yscrollcommand=scrollbar.set)
+        editor.insert("1.0", file_contents)
+
+        # Stack every tab's editor in the same spot; tkraise() picks the visible one.
+        editor_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+        button_frame = tk.Frame(self.tab_bar, bd=1, relief="raised")
+        button_frame.pack(side="left", padx=(0, 2), pady=2)
+
+        title_label = tk.Label(button_frame, text=title, padx=8, pady=4, cursor="hand2")
+        title_label.pack(side="left")
+
+        close_label = tk.Label(button_frame, text="×", padx=6, pady=4, cursor="hand2", fg="#8a1f1f")
+        close_label.pack(side="left")
+
+        tab = {
+            "id": tab_id,
+            "title": title,
+            "editor_frame": editor_frame,
+            "editor": editor,
+            "button_frame": button_frame,
+            "title_label": title_label,
+            "close_label": close_label,
+        }
+        self.tabs.append(tab)
+
+        title_label.bind("<Button-1>", lambda _event, tid=tab_id: self.select_tab(tid))
+        button_frame.bind("<Button-1>", lambda _event, tid=tab_id: self.select_tab(tid))
+        close_label.bind("<Button-1>", lambda _event, tid=tab_id: self.close_tab(tid))
+
+        self.select_tab(tab_id)
+
+        return editor
+
+    def _find_tab(self, tab_id):
+        return next((tab for tab in self.tabs if tab["id"] == tab_id), None)
+
+    def select_tab(self, tab_id):
+        if self._find_tab(tab_id) is None:
             return
+
+        self.active_tab_id = tab_id
+        self._restyle_tabs()
+        self._find_tab(tab_id)["editor_frame"].tkraise()
+
+    def _restyle_tabs(self):
+        active_bg = self.off_color
+        inactive_bg = "#d9d9d9"
+
+        for tab in self.tabs:
+            is_active = tab["id"] == self.active_tab_id
+            bg = active_bg if is_active else inactive_bg
+
+            tab["button_frame"].config(relief="sunken" if is_active else "raised", bg=bg)
+            tab["title_label"].config(bg=bg, fg=self.primary_color)
+            tab["close_label"].config(bg=bg)
+
+    def get_active_editor(self):
+        tab = self._find_tab(self.active_tab_id)
+        return tab["editor"] if tab else None
+
+    def rename_active_tab(self, new_title):
+        tab = self._find_tab(self.active_tab_id)
+        if tab is None:
+            return
+        tab["title"] = new_title
+        tab["title_label"].config(text=new_title)
+
+    def _show_run_header(self):
+        tab = self._find_tab(self.active_tab_id)
+        file_name = tab["title"] if tab else "program"
+
         self.output_console.config(state="normal")
-        self.output_console.insert(tk.END, text)
-        self.output_console.see(tk.END)
+        self.output_console.tag_configure(
+            "run_header",
+            foreground="#999999",
+            font=("Consolas", 10, "italic")
+        )
+        self.output_console.insert(tk.END, f"Running {file_name}\n", "run_header")
         self.output_console.config(state="disabled")
+
+    def close_tab(self, tab_id):
+        index = next((i for i, tab in enumerate(self.tabs) if tab["id"] == tab_id), None)
+        if index is None:
+            return
+
+        tab = self.tabs.pop(index)
+        tab["button_frame"].destroy()
+        tab["editor_frame"].destroy()
+
+        if not self.tabs:
+            self.create_editor_tab("Untitled")
+            return
+
+        if self.active_tab_id == tab_id:
+            new_index = min(index, len(self.tabs) - 1)
+            self.select_tab(self.tabs[new_index]["id"])
 
     def _prompt_for_signed_word(self):
         popup = tk.Toplevel(self.root)
@@ -85,7 +214,7 @@ class UVsimUI:
         popup.transient(self.root)
         popup.grab_set()
 
-        ttk.Label(popup, text="Enter a 6-digit number (signed or unsigned):").pack(padx=12, pady=(12, 6))
+        ttk.Label(popup, text="Enter a 4-digit number, with optional sign:").pack(padx=12, pady=(12, 6))
         value_entry = ttk.Entry(popup, width=16)
         value_entry.pack(padx=12, pady=6)
         value_entry.focus_set()
@@ -97,11 +226,9 @@ class UVsimUI:
 
         def submit_value():
             raw = value_entry.get().strip()
-            if not re.fullmatch(r"[+-]?\d{6}", raw):
-                error_label.config(text="Use format 123456, +123456, or -004278")
+            if not re.fullmatch(r"[+-]?\d{4}", raw):
+                error_label.config(text="Use format 1234, +1234, or -0042")
                 return
-            if raw[0] not in "+-":
-                raw = f"+{raw}"
             result["value"] = raw
             self.sim.input_flag = False
             popup.destroy()
@@ -113,17 +240,31 @@ class UVsimUI:
 
     def run_program(self):
         try:
-            self.sim = classes.simulator()
-            self.clear_output()
+            self.output_console.config(state="normal")
+            self.output_console.delete("1.0", tk.END)
+            self.output_console.config(state="disabled")
 
-            raw_code = self.code_editor.get("1.0", tk.END).strip()
+            self.sim = classes.simulator()
+
+            active_editor = self.get_active_editor()
+
+            if active_editor is None:
+                messagebox.showerror(
+                    "No Active File",
+                    "There is no active program tab to run."
+                )
+                return
+
+            self._show_run_header()
+
+            raw_code = active_editor.get("1.0", tk.END).strip()
 
             lines = [line.strip() for line in raw_code.split("\n") if line.strip()]
 
-            if len(lines) > 250:
+            if len(lines) > 100:
                 messagebox.showerror(
                     "Validation Error",
-                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 250."
+                    f"Memory limit exceeded: You have {len(lines)} instructions, but the max is 100."
                 )
                 return
             
@@ -165,20 +306,44 @@ class UVsimUI:
         except Exception as e:
             print(f"Error: {e}")
 
-    def reset_program(self):
-        self.sim = classes.simulator()
-        self.refresh_ui()
-
     def browse_file(self):
-        selected_file = filedialog.askopenfilename()
-        if selected_file:
+        selected_file = filedialog.askopenfilename(
+            filetypes=[
+                ("Text files", "*.txt"),
+                ("All files", "*.*")
+            ]
+        )
+
+        if not selected_file:
+            return
+
+        try:
             with open(selected_file, "r", encoding="utf-8") as file_handle:
                 file_contents = file_handle.read()
 
-            self.code_editor.delete("1.0", tk.END)
-            self.code_editor.insert("1.0", file_contents)
+            file_name = os.path.basename(selected_file)
+
+            self.create_editor_tab(
+                title=file_name,
+                file_contents=file_contents
+            )
+
+        except OSError as error:
+            messagebox.showerror(
+                "File Error",
+                f"Could not open the selected file:\n{error}"
+            )
 
     def save_program(self):
+        active_editor = self.get_active_editor()
+
+        if active_editor is None:
+            messagebox.showerror(
+                "No Active File",
+                "There is no active program tab to save."
+            )
+            return
+
         target_file = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
@@ -186,9 +351,20 @@ class UVsimUI:
         if not target_file:
             return
 
-        program_text = self.code_editor.get("1.0", tk.END).rstrip()
-        with open(target_file, "w", encoding="utf-8") as file_handle:
-            file_handle.write(program_text)
+        program_text = active_editor.get("1.0", tk.END).rstrip()
+
+        try:
+            with open(target_file, "w", encoding="utf-8") as file_handle:
+                file_handle.write(program_text)
+
+            file_name = os.path.basename(target_file)
+            self.rename_active_tab(file_name)
+
+        except OSError as error:
+            messagebox.showerror(
+                "Save Error",
+                f"Could not save the file:\n{error}"
+            )
 
     def color_theme_window(self):
         default_primary = "#4C721D"
@@ -259,28 +435,26 @@ class UVsimUI:
         self.btn_run = ttk.Button(control_frame, text="Run Code", command=self.run_program)
         self.btn_run.pack(side="left", padx=5)
 
-        self.btn_reset = ttk.Button(control_frame, text="Reset", command=self.reset_program)
-        self.btn_reset.pack(side="left", padx=5)
-
-        # Team Member 3 will plug their color function to this button
         self.btn_theme = ttk.Button(control_frame, text="Color Theme",command=self.color_theme_window)
         self.btn_theme.pack(side="right", padx=5)
 
-        accumulator_frame = ttk.LabelFrame(self.root, text=" CPU Status ", padding=(10, 5))
-        accumulator_frame.pack(pady=10, padx=20, fill=tk.X)
-
-        self.accumulator_value = ttk.Label(accumulator_frame, text=f"Accumulator: {self.sim.accumulator}", font=("Arial", 12, "bold"))
-        self.accumulator_value.pack(side="top", pady=5)
+        self.accumulator_value = ttk.Label(
+            control_frame,
+            text=f"Accumulator: {self.sim.accumulator}"
+        )
+        self.accumulator_value.pack(side="right", padx=10)
 
         editor_frame = ttk.LabelFrame(self.root, text=" BasicML Code Editor ", padding=(10, 10))
         editor_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
 
-        self.code_editor = tk.Text(editor_frame, width=60, height=15,font=("Consolas",12),bg=self.off_color,fg=self.primary_color)
-        self.code_editor.pack(side="left", fill=tk.BOTH, expand=True)
+        self.tab_bar = tk.Frame(editor_frame, bg=self.off_color)
+        self.tab_bar.pack(side="top", fill=tk.X)
 
-        scrollbar = ttk.Scrollbar(editor_frame, command=self.code_editor.yview)
-        scrollbar.pack(side="left", fill="y")
-        self.code_editor.config(yscrollcommand=scrollbar.set)
+        self.editor_container = ttk.Frame(editor_frame)
+        self.editor_container.pack(side="top", fill=tk.BOTH, expand=True)
+
+        # Start the program with one empty editor tab.
+        self.create_editor_tab("Untitled")
 
         output_frame = ttk.LabelFrame(self.root, text=" Program Output ", padding=(10, 10))
         output_frame.pack(pady=(0, 15), padx=20, fill=tk.X) # Pushed to the bottom

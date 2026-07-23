@@ -1,5 +1,5 @@
 def _validate_address(operand):
-    if not (0 <= operand <= 249):
+    if not (0 <= operand <= 99):
         raise ValueError(f"Invalid memory address {operand}")
     
 def _truncate(value):
@@ -26,9 +26,9 @@ class operations_machine:
         _validate_address(operand)
 
         while True:
-            raw_input = input("Insert a signed 6-digit number (e.g., +123456): ").strip()
+            raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
 
-            if len(raw_input) == 7 and raw_input[0] in "+-" and raw_input[1:].isdigit():
+            if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
                 self.registers[operand] = int(raw_input)
                 break
             else:

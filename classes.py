@@ -1,4 +1,7 @@
+import os
 import operations
+
+_COLOR_SCHEME_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "color_scheme.txt")
 
 
 def convert_word_4_to_6(word):
@@ -40,7 +43,7 @@ class Instruction:
 
 class simulator:
     def __init__(self):
-        self.registers = {i: 0 for i in range(250)}
+        self.registers = {i: 0 for i in range(100)}
         self.accumulator = 0
         self.DEBUG = False
         self.pointer = 0
@@ -50,16 +53,16 @@ class simulator:
         self.last_error = None
 
     def split_instruction(self, string):
-        # Parse a signed 6-digit word like +431100 into opcode + operand parts.
+        # Parse a signed 4-digit word like +4300 into opcode + operand parts.
         if not string:
             raise ValueError("Empty instruction line")
-        if len(string) != 7 or string[0] not in "+-" or not string[1:].isdigit():
+        if len(string) != 5 or string[0] not in "+-" or not string[1:].isdigit():
             raise ValueError(f"Invalid instruction format: {string}")
 
         output = Instruction(None, None, None)
         output.sign = string[0]
-        output.code = int(string[1:4])
-        output.operand = int(string[4:])
+        output.code = int(string[1:3])
+        output.operand = int(string[3:])
         return output
 
     def read_program(self, filename):
@@ -182,21 +185,21 @@ class simulator:
 
 
 def _validate_address(operand):
-    if not (0 <= operand <= 249):
+    if not (0 <= operand <= 99):
         raise ValueError(f"Invalid memory address {operand}")
 
 
 def _truncate(value):
     # Overflow handling: chops off higher order digits (12345 -> 2345)
     sign = -1 if value < 0 else 1
-    return (abs(value) % 1000000) * sign
+    return (abs(value) % 10000) * sign
 
 
 def _get_memory_val(memory_content):
     # Extracts the integer, fixing the PEMDAS math sign bug
     if hasattr(memory_content, "sign"):
         sign_multiplier = 1 if memory_content.sign == "+" else -1
-        return ((memory_content.code * 1000) + memory_content.operand) * sign_multiplier
+        return ((memory_content.code * 100) + memory_content.operand) * sign_multiplier
     return int(memory_content)
 
 
@@ -210,13 +213,13 @@ class operations_machine:
         _validate_address(operand)
 
         while True:
-            raw_input = input("Insert a signed 6-digit number (e.g., +123124): ").strip()
+            raw_input = input("Insert a signed 4-digit number (e.g., +1234): ").strip()
 
-            if len(raw_input) == 7 and raw_input[0] in "+-" and raw_input[1:].isdigit():
+            if len(raw_input) == 5 and raw_input[0] in "+-" and raw_input[1:].isdigit():
                 self.registers[operand] = int(raw_input)
                 break
             else:
-                print("[!] Invalid input. You must include a sign (+ or -) and exactly 6 digits. Try again.")
+                print("[!] Invalid input. You must include a sign (+ or -) and exactly 4 digits. Try again.")
 
     # WRITE
     def write(self, operand):
@@ -295,7 +298,7 @@ def is_Valid_Hex(color):
 
 def saved_colors(primary,off):
 
-    color_file = open("color_scheme.txt", "r+")
+    color_file = open(_COLOR_SCHEME_PATH, "r+")
     color_file.truncate(0)
     color_file.write(primary)
     color_file.write("\n")

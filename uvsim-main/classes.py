@@ -8,7 +8,8 @@ def convert_word_4_to_6(word):
     """Convert a signed 4-digit UVSim word into signed 6-digit format.
 
     Old format:  sign + 2-digit opcode + 2-digit operand (example: +2045)
-    New format:  sign + 2-digit opcode + 4-digit operand (example: +200045)
+    New format:  sign + leading zero + 2-digit opcode + 3-digit operand
+    (example: +020045)
     """
     if not isinstance(word, str):
         raise TypeError("Word must be a string")
@@ -20,7 +21,7 @@ def convert_word_4_to_6(word):
     sign = stripped[0]
     opcode = stripped[1:3]
     operand = stripped[3:5]
-    return f"{sign}{opcode}00{operand}"
+    return f"{sign}0{opcode}0{operand}"
 
 
 def convert_program_4_to_6(lines):
@@ -33,6 +34,24 @@ def convert_program_4_to_6(lines):
             continue
         converted.append(convert_word_4_to_6(stripped))
     return converted
+
+
+def normalize_program_lines(lines):
+    """Normalize input program lines to the signed 6-digit word format."""
+    normalized = []
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            normalized.append("")
+            continue
+        if len(stripped) == 5:
+            normalized.append(convert_word_4_to_6(stripped))
+            continue
+        if len(stripped) == 7 and stripped[0] in "+-" and stripped[1:].isdigit():
+            normalized.append(stripped)
+            continue
+        raise ValueError(f"Invalid instruction format: {stripped}")
+    return normalized
 
 class Instruction:
     def __init__(self, sign, code, operand):
@@ -53,22 +72,32 @@ class simulator:
         self.last_error = None
 
     def split_instruction(self, string):
-        # Parse a signed 4-digit word like +4300 into opcode + operand parts.
+        # Parse signed UVSim words, normalizing legacy 4-digit words first.
         if not string:
             raise ValueError("Empty instruction line")
-        if len(string) != 5 or string[0] not in "+-" or not string[1:].isdigit():
+
+        normalized = normalize_program_lines([string])[0]
+        if len(normalized) != 7:
             raise ValueError(f"Invalid instruction format: {string}")
 
+        if normalized[1] == "0":
+            code_text = normalized[2:4]
+            operand_text = normalized[4:]
+        else:
+            code_text = normalized[1:3]
+            operand_text = normalized[3:]
+
         output = Instruction(None, None, None)
-        output.sign = string[0]
-        output.code = int(string[1:3])
-        output.operand = int(string[3:])
+        output.sign = normalized[0]
+        output.code = int(code_text)
+        output.operand = int(operand_text)
         return output
 
     def read_program(self, filename):
         with open(filename, 'r') as f:
+            normalized_lines = normalize_program_lines(f.readlines())
             # Program words are loaded by memory address (line index), not operand value.
-            for address, line in enumerate(f):
+            for address, line in enumerate(normalized_lines):
                 stripped = line.strip()
                 if not stripped:
                     continue
@@ -107,7 +136,8 @@ class simulator:
         return False
     
     def load_from_list(self, lines):
-        for address, line in enumerate(lines):
+        normalized_lines = normalize_program_lines(lines)
+        for address, line in enumerate(normalized_lines):
             stripped = line.strip()
             if not stripped:
                 continue

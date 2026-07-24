@@ -321,6 +321,13 @@ class UVsimUI:
             with open(selected_file, "r", encoding="utf-8") as file_handle:
                 file_contents = file_handle.read()
 
+            try:
+                normalized_lines = classes.normalize_program_lines(file_contents.splitlines())
+                file_contents = "\n".join(normalized_lines)
+            except ValueError:
+                # Keep original file text when it is not a valid UVSim program.
+                pass
+
             file_name = os.path.basename(selected_file)
 
             self.create_editor_tab(

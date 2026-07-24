@@ -10,8 +10,8 @@ import operations
 
 class TestMain(unittest.TestCase):
     def test_convert_word_4_to_6_success(self):
-        self.assertEqual(classes.convert_word_4_to_6("+2045"), "+200045")
-        self.assertEqual(classes.convert_word_4_to_6("-4300"), "-430000")
+        self.assertEqual(classes.convert_word_4_to_6("+2045"), "+020045")
+        self.assertEqual(classes.convert_word_4_to_6("-4300"), "-043000")
 
     def test_convert_word_4_to_6_rejects_invalid_word(self):
         with self.assertRaises(ValueError):
@@ -24,7 +24,12 @@ class TestMain(unittest.TestCase):
     def test_convert_program_4_to_6_success(self):
         lines = ["+1007", "", "+4300"]
         converted = classes.convert_program_4_to_6(lines)
-        self.assertEqual(converted, ["+100007", "", "+430000"])
+        self.assertEqual(converted, ["+010007", "", "+043000"])
+
+    def test_normalize_program_lines_converts_legacy_words(self):
+        lines = ["+1007", "", "+4300"]
+        normalized = classes.normalize_program_lines(lines)
+        self.assertEqual(normalized, ["+010007", "", "+043000"])
 
     def test_split_instruction_parses_signed_word(self):
         sim = classes.simulator()
@@ -55,6 +60,36 @@ class TestMain(unittest.TestCase):
         self.assertEqual(sim.registers[0].code, 10)
         self.assertIsInstance(sim.registers[2], classes.Instruction)
         self.assertEqual(sim.registers[2].code, 43)
+
+    def test_read_program_auto_converts_legacy_format(self):
+        sim = classes.simulator()
+        program = "+1007\n+4300\n"
+
+        with tempfile.NamedTemporaryFile("w", delete=False) as tmp:
+            tmp.write(program)
+            tmp_path = tmp.name
+
+        try:
+            sim.read_program(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+
+        self.assertIsInstance(sim.registers[0], classes.Instruction)
+        self.assertEqual(sim.registers[0].code, 10)
+        self.assertEqual(sim.registers[0].operand, 7)
+        self.assertIsInstance(sim.registers[1], classes.Instruction)
+        self.assertEqual(sim.registers[1].code, 43)
+        self.assertEqual(sim.registers[1].operand, 0)
+
+    def test_load_from_list_auto_converts_legacy_format(self):
+        sim = classes.simulator()
+        sim.load_from_list(["+1007", "+4300"])
+
+        self.assertIsInstance(sim.registers[0], classes.Instruction)
+        self.assertEqual(sim.registers[0].code, 10)
+        self.assertEqual(sim.registers[0].operand, 7)
+        self.assertIsInstance(sim.registers[1], classes.Instruction)
+        self.assertEqual(sim.registers[1].code, 43)
 
     def test_execute_program_halts_on_halt_instruction(self):
         sim = classes.simulator()

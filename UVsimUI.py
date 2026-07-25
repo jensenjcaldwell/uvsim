@@ -214,7 +214,7 @@ class UVsimUI:
         popup.transient(self.root)
         popup.grab_set()
 
-        ttk.Label(popup, text="Enter a 4-digit number, with optional sign:").pack(padx=12, pady=(12, 6))
+        ttk.Label(popup, text="Enter a 6-digit number, with optional sign:").pack(padx=12, pady=(12, 6))
         value_entry = ttk.Entry(popup, width=16)
         value_entry.pack(padx=12, pady=6)
         value_entry.focus_set()
@@ -226,8 +226,8 @@ class UVsimUI:
 
         def submit_value():
             raw = value_entry.get().strip()
-            if not re.fullmatch(r"[+-]?\d{4}", raw):
-                error_label.config(text="Use format 1234, +1234, or -0042")
+            if not re.fullmatch(r"[+-]?\d{6}", raw):
+                error_label.config(text="Use format 123456, +123456, or -000042")
                 return
             result["value"] = raw
             self.sim.input_flag = False

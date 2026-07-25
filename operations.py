@@ -23,15 +23,15 @@ def read(operand, registers, inputval=None):
             raw_input = inputval.strip()
             inputval = None  # Clear after first use to avoid reuse in subsequent READs
         else:
-            raw_input = input("Insert a 4-digit number, with optional sign (e.g., 1234 or +1234): ").strip()
+            raw_input = input("Insert a 6-digit number, with optional sign (e.g., 123456 or +123456): ").strip()
 
         number_part = raw_input[1:] if raw_input and raw_input[0] in "+-" else raw_input
 
-        if len(number_part) == 4 and number_part.isdigit():
+        if len(number_part) == 6 and number_part.isdigit():
             registers[operand] = int(raw_input)
             break
         else:
-            print("[!] Invalid input. Enter exactly 4 digits, with an optional + or - sign.")
+            print("[!] Invalid input. Enter exactly 6 digits, with an optional + or - sign.")
 
 
 # WRITE

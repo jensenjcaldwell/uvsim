@@ -136,12 +136,12 @@ class TestOperations(unittest.TestCase):
         self.registers = {i: 0 for i in range(100)}
 
     def test_read_success(self):
-        with patch("builtins.input", return_value="+0055"):
+        with patch("builtins.input", return_value="+000055"):
             operations.read(7, self.registers)
         self.assertEqual(self.registers[7], 55)
 
     def test_read_retries_after_invalid_input(self):
-        with patch("builtins.input", side_effect=["abc", "+0055"]):
+        with patch("builtins.input", side_effect=["abc", "+000055"]):
             operations.read(7, self.registers)
         self.assertEqual(self.registers[7], 55)
 
